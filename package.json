@@ -28,13 +28,7 @@
     "openapi 3"
   ],
   "files": [
-    "bin",
-    "index.js",
-    "LICENSE",
-    "lib",
-    "src/middleware",
-    "dist/middleware",
-    "schemas"
+    "dist"
   ],
   "dependencies": {
     "async": "^2.6.3",
