@@ -1,7 +1,6 @@
 'use strict';
 
 import * as express from 'express';
-import * as path from 'path';
 import cookieParser = require('cookie-parser');
 import bodyParser = require('body-parser');
 import { SwaggerUI } from './swagger.ui';
@@ -10,7 +9,7 @@ import { SwaggerParameters } from './swagger.parameters';
 import * as logger from 'morgan';
 import * as fs from 'fs';
 import * as jsyaml from 'js-yaml';
-import { OpenApiValidator } from 'express-openapi-validator';
+import * as OpenApiValidator from 'express-openapi-validator';
 import { Oas3AppOptions } from './oas3.options';
 
 export class ExpressAppConfig {
@@ -39,6 +38,12 @@ export class ExpressAppConfig {
 
         const swaggerUi = new SwaggerUI(swaggerDoc, appOptions.swaggerUI);
         this.app.use(swaggerUi.serveStaticContent());
+
+        this.app.use(OpenApiValidator.middleware(this.openApiValidatorOptions));
+        this.app.use(new SwaggerParameters().checkParameters());
+        this.app.use(new SwaggerRouter().initialize(this.routingOptions));
+
+        this.app.use(this.errorHandler);
     }
 
     private setOpenApiValidatorOptions(definitionPath: string, appOptions: Oas3AppOptions) {
@@ -53,23 +58,6 @@ export class ExpressAppConfig {
 
         // Override apiSpec with definition Path to keep the prior behavior
         this.openApiValidatorOptions.apiSpec = definitionPath;
-    }
-
-    public addValidator() {
-        new OpenApiValidator(this.openApiValidatorOptions)
-            .install(this.app)
-            .then(() => {
-                this.app.use(new SwaggerParameters().checkParameters());
-                this.app.use(new SwaggerRouter().initialize(this.routingOptions));
-
-                this.app.use((err, req, res, next) => {
-                    // format errors
-                    res.status(err.status || 500).json({
-                        message: err.message,
-                        errors: err.errors,
-                    });
-                });
-            });
     }
 
     public configureLogger(loggerOptions) {
@@ -89,6 +77,13 @@ export class ExpressAppConfig {
         }
 
         return logger(format, options);
+    }
+
+    private errorHandler(error, request, response, next) {
+        response.status(error.status || 500).json({
+            message: error.message,
+            errors: error.errors,
+        });
     }
 
     public getApp(): express.Application {
