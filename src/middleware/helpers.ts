@@ -24,7 +24,7 @@
 
 'use strict';
 
-import { each } from 'lodash';
+import { each, capitalize, split } from 'lodash';
 
 export function debugError(err, debug) {
   var reason = err.message.replace(/^.*validation failed: /, '');
@@ -57,3 +57,16 @@ export function debugError(err, debug) {
     });
   }
 };
+
+export function removeDashElementToCamelCase(str) {
+  const pieces = split(str, '-');
+
+  if (pieces.length <= 1) {
+    return str;
+  }
+  let result = pieces[0];
+  for (let index = 1; index < pieces.length; index++) {
+    result += capitalize(pieces[index]);
+  }
+  return result;
+}
