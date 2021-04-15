@@ -108,32 +108,34 @@ export class SwaggerRouter {
       debug('%s %s', req.method, req.url);
       debug('  Will process: %s', isUndefined(operation) ? 'no' : 'yes');
 
-      if (operation) {
-        handlerName = getHandlerName(req);
-        handler = handlerCache[handlerName];
+      if (req.openapi) {
+        if (operation) {
+          handlerName = getHandlerName(req);
+          handler = handlerCache[handlerName];
 
-        debug('  Route handler: %s', handlerName);
-        debug('    Missing: %s', isUndefined(handler) ? 'yes' : 'no');
-        debug('    Ignored: %s', options.ignoreMissingHandlers === true ? 'yes' : 'no');
+          debug('  Route handler: %s', handlerName);
+          debug('    Missing: %s', isUndefined(handler) ? 'yes' : 'no');
+          debug('    Ignored: %s', options.ignoreMissingHandlers === true ? 'yes' : 'no');
 
-        if (isUndefined(handler)) {
+          if (isUndefined(handler)) {
+            return send405(req, res, next);
+          }
+
+          if (!isUndefined(handler)) {
+            try {
+              return handler.apply(this, req.openapi.swaggerParameters);
+            } catch (err) {
+              rErr = err;
+              debug('Handler threw an unexpected error: %s\n%s', err.message, err.stack);
+            }
+          } else if (options.ignoreMissingHandlers !== true) {
+            rErr = new Error('Cannot resolve the configured swagger-router handler: ' + handlerName);
+            res.statusCode = 500;
+          }
+        } else {
+          debug('  No handler for method: %s', req.method);
           return send405(req, res, next);
         }
-
-        if (!isUndefined(handler)) {
-          try {
-            return handler.apply(this, req.openapi.swaggerParameters);
-          } catch (err) {
-            rErr = err;
-            debug('Handler threw an unexpected error: %s\n%s', err.message, err.stack);
-          }
-        } else if (options.ignoreMissingHandlers !== true) {
-          rErr = new Error('Cannot resolve the configured swagger-router handler: ' + handlerName);
-          res.statusCode = 500;
-        }
-      } else {
-        debug('  No handler for method: %s', req.method);
-        return send405(req, res, next);
       }
       if (rErr) {
         debugError(rErr, debug);
