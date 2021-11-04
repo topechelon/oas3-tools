@@ -4,6 +4,7 @@ exports.Oas3AppOptions = void 0;
 const logging_options_1 = require("./logging.options");
 class Oas3AppOptions {
     constructor(routingOpts, openApiValidatorOpts, logging, swaggerUI) {
+        this.middlewareLists = {};
         this.routing = routingOpts;
         this.openApiValidator = openApiValidatorOpts;
         this.swaggerUI = swaggerUI;

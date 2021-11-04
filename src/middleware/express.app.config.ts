@@ -24,8 +24,16 @@ export class ExpressAppConfig {
         this.setOpenApiValidatorOptions(definitionPath, appOptions);
         this.app = express();
 
+        const middlewareLists = appOptions.middlewareLists ?? {};
+
         const spec = fs.readFileSync(definitionPath, 'utf8');
         const swaggerDoc = jsyaml.safeLoad(spec);
+
+        if (middlewareLists.initial ?? false) {
+            middlewareLists.initial.forEach(middleware => {
+                this.app.use(...middleware);
+            });
+        }
 
         this.app.use(bodyParser.urlencoded());
         this.app.use(bodyParser.text());
@@ -39,11 +47,35 @@ export class ExpressAppConfig {
         const swaggerUi = new SwaggerUI(swaggerDoc, appOptions.swaggerUI);
         this.app.use(swaggerUi.serveStaticContent());
 
+        if (middlewareLists.firstRequests ?? false) {
+            middlewareLists.firstRequests.forEach(middleware => {
+                this.app.use(...middleware);
+            });
+        }
+
         this.app.use(OpenApiValidator.middleware(this.openApiValidatorOptions));
         this.app.use(new SwaggerParameters().checkParameters());
         this.app.use(new SwaggerRouter().initialize(this.routingOptions));
 
+        if (middlewareLists.lastRequests ?? false) {
+            middlewareLists.lastRequests.forEach(middleware => {
+                this.app.use(...middleware);
+            });
+        }
+
+        if (middlewareLists.errorHandlers ?? false) {
+            middlewareLists.errorHandlers.forEach(middleware => {
+                this.app.use(...middleware);
+            });
+        }
+
         this.app.use(this.errorHandler);
+
+        if (middlewareLists.final ?? false) {
+            middlewareLists.final.forEach(middleware => {
+                this.app.use(...middleware);
+            });
+        }
     }
 
     private setOpenApiValidatorOptions(definitionPath: string, appOptions: Oas3AppOptions) {
