@@ -1,15 +1,15 @@
 import { OpenApiValidatorOpts } from 'express-openapi-validator/dist/framework/types';
 import { LoggingOptions } from './logging.options';
 import { SwaggerUiOptions } from './swagger.ui.options';
-export declare type MiddlewareLists = {
-    initial?: any[][];
-    firstRequests?: any[][];
-    lastRequests?: any[][];
-    errorHandlers?: any[][];
-    final?: any[][];
+export declare type MiddlewareInjectors = {
+    initial?: Function[];
+    firstRequests?: Function[];
+    lastRequests?: Function[];
+    errorHandlers?: Function[];
+    final?: Function[];
 };
 export declare class Oas3AppOptions {
-    middlewareLists?: MiddlewareLists;
+    middlewareInjectors?: MiddlewareInjectors;
     routing: any;
     openApiValidator: OpenApiValidatorOpts;
     logging?: LoggingOptions;

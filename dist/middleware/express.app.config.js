@@ -18,13 +18,11 @@ class ExpressAppConfig {
         this.routingOptions = appOptions.routing;
         this.setOpenApiValidatorOptions(definitionPath, appOptions);
         this.app = express();
-        const middlewareLists = (_a = appOptions.middlewareLists) !== null && _a !== void 0 ? _a : {};
+        const middlewareInjectors = (_a = appOptions.middlewareInjectors) !== null && _a !== void 0 ? _a : {};
         const spec = fs.readFileSync(definitionPath, 'utf8');
         const swaggerDoc = jsyaml.safeLoad(spec);
-        if ((_b = middlewareLists.initial) !== null && _b !== void 0 ? _b : false) {
-            middlewareLists.initial.forEach(middleware => {
-                this.app.use(...middleware);
-            });
+        if ((_b = middlewareInjectors.initial) !== null && _b !== void 0 ? _b : false) {
+            middlewareInjectors.initial.forEach(fn => fn(this.app));
         }
         this.app.use(bodyParser.urlencoded());
         this.app.use(bodyParser.text());
@@ -35,29 +33,21 @@ class ExpressAppConfig {
         this.app.use(cookieParser());
         const swaggerUi = new swagger_ui_1.SwaggerUI(swaggerDoc, appOptions.swaggerUI);
         this.app.use(swaggerUi.serveStaticContent());
-        if ((_c = middlewareLists.firstRequests) !== null && _c !== void 0 ? _c : false) {
-            middlewareLists.firstRequests.forEach(middleware => {
-                this.app.use(...middleware);
-            });
+        if ((_c = middlewareInjectors.firstRequests) !== null && _c !== void 0 ? _c : false) {
+            middlewareInjectors.firstRequests.forEach(fn => fn(this.app));
         }
         this.app.use(OpenApiValidator.middleware(this.openApiValidatorOptions));
         this.app.use(new swagger_parameters_1.SwaggerParameters().checkParameters());
         this.app.use(new swagger_router_1.SwaggerRouter().initialize(this.routingOptions));
-        if ((_d = middlewareLists.lastRequests) !== null && _d !== void 0 ? _d : false) {
-            middlewareLists.lastRequests.forEach(middleware => {
-                this.app.use(...middleware);
-            });
+        if ((_d = middlewareInjectors.lastRequests) !== null && _d !== void 0 ? _d : false) {
+            middlewareInjectors.lastRequests.forEach(fn => fn(this.app));
         }
-        if ((_e = middlewareLists.errorHandlers) !== null && _e !== void 0 ? _e : false) {
-            middlewareLists.errorHandlers.forEach(middleware => {
-                this.app.use(...middleware);
-            });
+        if ((_e = middlewareInjectors.errorHandlers) !== null && _e !== void 0 ? _e : false) {
+            middlewareInjectors.errorHandlers.forEach(fn => fn(this.app));
         }
         this.app.use(this.errorHandler);
-        if ((_f = middlewareLists.final) !== null && _f !== void 0 ? _f : false) {
-            middlewareLists.final.forEach(middleware => {
-                this.app.use(...middleware);
-            });
+        if ((_f = middlewareInjectors.final) !== null && _f !== void 0 ? _f : false) {
+            middlewareInjectors.final.forEach(fn => fn(this.app));
         }
     }
     setOpenApiValidatorOptions(definitionPath, appOptions) {
